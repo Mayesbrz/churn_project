@@ -1,0 +1,331 @@
+{
+  "model_path": "models/random_forest_model.joblib",
+  "explained_class": "churn=1",
+  "sample_size": 800,
+  "expected_value": 0.5000265383544479,
+  "top_global_features": [
+    {
+      "feature": "csat_score",
+      "mean_abs_shap": 0.08963080643377017,
+      "mean_shap": -0.03239911432180483
+    },
+    {
+      "feature": "tenure_months",
+      "mean_abs_shap": 0.05339317192731237,
+      "mean_shap": -0.02441714976794759
+    },
+    {
+      "feature": "monthly_logins",
+      "mean_abs_shap": 0.04369706473033834,
+      "mean_shap": -0.017174859947820045
+    },
+    {
+      "feature": "payment_failures",
+      "mean_abs_shap": 0.03957177719345944,
+      "mean_shap": -0.013269413742696643
+    },
+    {
+      "feature": "total_revenue",
+      "mean_abs_shap": 0.02958843620930628,
+      "mean_shap": -0.011827848927559887
+    },
+    {
+      "feature": "last_login_days_ago",
+      "mean_abs_shap": 0.01010831568076594,
+      "mean_shap": -0.006933584432163429
+    },
+    {
+      "feature": "avg_session_time",
+      "mean_abs_shap": 0.0089631935641336,
+      "mean_shap": -0.008266061106791782
+    },
+    {
+      "feature": "avg_resolution_time",
+      "mean_abs_shap": 0.008054787981686769,
+      "mean_shap": -0.007179574759269666
+    },
+    {
+      "feature": "nps_score",
+      "mean_abs_shap": 0.007415467851678409,
+      "mean_shap": -0.006449780280351043
+    },
+    {
+      "feature": "usage_growth_rate",
+      "mean_abs_shap": 0.007372035725731257,
+      "mean_shap": -0.006875236524828907
+    },
+    {
+      "feature": "email_open_rate",
+      "mean_abs_shap": 0.0069231784313617505,
+      "mean_shap": -0.006452697610529063
+    },
+    {
+      "feature": "age",
+      "mean_abs_shap": 0.006672829885538104,
+      "mean_shap": -0.006463912475099987
+    },
+    {
+      "feature": "marketing_click_rate",
+      "mean_abs_shap": 0.006214467497477387,
+      "mean_shap": -0.005987112540186159
+    },
+    {
+      "feature": "features_used",
+      "mean_abs_shap": 0.0050460847070683225,
+      "mean_shap": -0.00428609669607607
+    },
+    {
+      "feature": "monthly_fee",
+      "mean_abs_shap": 0.004222903014032591,
+      "mean_shap": -0.0029809992064149245
+    }
+  ],
+  "local_examples": [
+    {
+      "rank": 1,
+      "row_index": 3069,
+      "true_churn": 0,
+      "predicted_probability": 0.7622999860209414,
+      "top_factors": [
+        {
+          "feature": "tenure_months",
+          "shap_value": 0.13557476463881274,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "csat_score",
+          "shap_value": 0.10239537569787226,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "total_revenue",
+          "shap_value": 0.06337978292466291,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "last_login_days_ago",
+          "shap_value": 0.014413716447881952,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "payment_failures",
+          "shap_value": -0.012375555380143009,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "marketing_click_rate",
+          "shap_value": -0.010109136079693989,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "age",
+          "shap_value": -0.00844010184284151,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "monthly_fee",
+          "shap_value": -0.005884863388493332,
+          "effect": "r\u00e9duit le risque"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "row_index": 459,
+      "true_churn": 1,
+      "predicted_probability": 0.6985934810549471,
+      "top_factors": [
+        {
+          "feature": "tenure_months",
+          "shap_value": 0.13941721208967287,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "csat_score",
+          "shap_value": 0.12832843688998005,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "total_revenue",
+          "shap_value": 0.04978012330440921,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "monthly_logins",
+          "shap_value": -0.03039766938145735,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "payment_failures",
+          "shap_value": -0.014864675824457085,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "email_open_rate",
+          "shap_value": -0.01019280656150437,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "city_London",
+          "shap_value": -0.008454107828667082,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "country_Canada",
+          "shap_value": -0.007185587117359101,
+          "effect": "r\u00e9duit le risque"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "row_index": 1714,
+      "true_churn": 0,
+      "predicted_probability": 0.6811276058191182,
+      "top_factors": [
+        {
+          "feature": "tenure_months",
+          "shap_value": 0.20237631438063744,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "total_revenue",
+          "shap_value": 0.09515978688933895,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "csat_score",
+          "shap_value": -0.04440277018641398,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "monthly_logins",
+          "shap_value": -0.012978391467372615,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "payment_failures",
+          "shap_value": -0.012567801461238162,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "last_login_days_ago",
+          "shap_value": -0.012232403538217144,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "age",
+          "shap_value": -0.008351059099157945,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "country_Bangladesh",
+          "shap_value": -0.00750782328631154,
+          "effect": "r\u00e9duit le risque"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "row_index": 5036,
+      "true_churn": 0,
+      "predicted_probability": 0.6760327386305292,
+      "top_factors": [
+        {
+          "feature": "tenure_months",
+          "shap_value": 0.2256693676676966,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "total_revenue",
+          "shap_value": 0.09050212693987324,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "csat_score",
+          "shap_value": -0.056163370711855676,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "payment_failures",
+          "shap_value": -0.013599859331261495,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "avg_session_time",
+          "shap_value": -0.009715030981958394,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "monthly_fee",
+          "shap_value": 0.00908694552101809,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "features_used",
+          "shap_value": -0.008180957839656819,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "monthly_logins",
+          "shap_value": -0.007868875419902287,
+          "effect": "r\u00e9duit le risque"
+        }
+      ]
+    },
+    {
+      "rank": 5,
+      "row_index": 4506,
+      "true_churn": 1,
+      "predicted_probability": 0.659833237826481,
+      "top_factors": [
+        {
+          "feature": "csat_score",
+          "shap_value": 0.11080389871394854,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "monthly_logins",
+          "shap_value": 0.0767042519997034,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "tenure_months",
+          "shap_value": 0.07588700793961785,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "total_revenue",
+          "shap_value": 0.030936521460489877,
+          "effect": "augmente le risque"
+        },
+        {
+          "feature": "support_tickets",
+          "shap_value": -0.014020511505037392,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "country_USA",
+          "shap_value": -0.013249132944084212,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "usage_growth_rate",
+          "shap_value": -0.012980778158902273,
+          "effect": "r\u00e9duit le risque"
+        },
+        {
+          "feature": "features_used",
+          "shap_value": -0.012910723703539583,
+          "effect": "r\u00e9duit le risque"
+        }
+      ]
+    }
+  ],
+  "artifacts": {
+    "global_csv": "reports/shap_global_importance.csv",
+    "local_csv": "reports/shap_local_examples.csv",
+    "summary_bar": "reports/shap_summary_bar.png",
+    "beeswarm": "reports/shap_beeswarm.png"
+  }
+}

@@ -1,530 +1,501 @@
 """
-🚀 CUSTOMER CHURN PREDICTION DASHBOARD
-Advanced Analytics & Real-time Predictions
+Decision dashboard for customer churn prediction.
+
+The dashboard loads the local trained model directly. The API remains optional
+and is not required for the Streamlit experience.
 """
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import joblib
+from __future__ import annotations
+
 import json
 from datetime import datetime
-import warnings
-warnings.filterwarnings('ignore')
+from pathlib import Path
 
-# ═══════════════════════════════════════════════════════════════════════════
-# ⚙️ PAGE CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════
+import joblib
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_PATH = BASE_DIR / "data" / "customer_churn_business_dataset.csv"
+MODEL_PATH = BASE_DIR / "models" / "random_forest_model.joblib"
+METADATA_PATH = BASE_DIR / "models" / "model_metadata.json"
+COMPARISON_PATH = BASE_DIR / "models" / "model_comparison.json"
+FEATURES_PATH = BASE_DIR / "models" / "feature_names.json"
+SHAP_GLOBAL_PATH = BASE_DIR / "reports" / "shap_global_importance.csv"
+SHAP_LOCAL_PATH = BASE_DIR / "reports" / "shap_local_examples.csv"
+SHAP_BAR_PATH = BASE_DIR / "reports" / "shap_summary_bar.png"
+SHAP_BEESWARM_PATH = BASE_DIR / "reports" / "shap_beeswarm.png"
 
 st.set_page_config(
-    page_title="🎯 Churn Prediction Dashboard",
+    page_title="Retention Cockpit",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
-# Custom CSS
-st.markdown("""
-<style>
-    [data-testid="stMetricValue"] { font-size: 28px; }
-    [data-testid="stMetricLabel"] { font-size: 14px; }
-    .main { padding: 2rem; }
-    h1 { color: #1f77b4; }
-    h2 { color: #2ca02c; border-bottom: 2px solid #2ca02c; padding-bottom: 10px; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <style>
+        :root {
+            --ink: #152235;
+            --muted: #64748b;
+            --line: #e2e8f0;
+            --panel: #ffffff;
+            --soft: #f6f8fb;
+            --blue: #2563eb;
+            --teal: #0f766e;
+            --red: #dc2626;
+        }
+        .stApp {
+            background: #f6f8fb;
+        }
+        section[data-testid="stSidebar"] {
+            background: #0f1f33;
+        }
+        section[data-testid="stSidebar"] * {
+            color: #e5edf8 !important;
+        }
+        .block-container {
+            padding-top: 1.4rem;
+            padding-bottom: 2.5rem;
+        }
+        .hero {
+            background: linear-gradient(135deg, #12233b 0%, #17426f 55%, #0f766e 100%);
+            border-radius: 8px;
+            padding: 26px 30px;
+            color: white;
+            margin-bottom: 22px;
+        }
+        .hero h1 {
+            font-size: 34px;
+            line-height: 1.08;
+            margin: 0 0 8px 0;
+            color: white;
+        }
+        .hero p {
+            color: #dbeafe;
+            max-width: 820px;
+            margin: 0;
+            font-size: 15px;
+        }
+        .section-title {
+            color: var(--ink);
+            font-size: 20px;
+            font-weight: 750;
+            margin: 10px 0 8px 0;
+        }
+        div[data-testid="stMetric"] {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+        }
+        div[data-testid="stMetricLabel"] {
+            color: #64748b;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #152235;
+            font-size: 25px;
+        }
+        .insight-box {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px 18px;
+            margin-top: 8px;
+        }
+        .risk-low {
+            color: #047857;
+            font-weight: 800;
+        }
+        .risk-medium {
+            color: #b45309;
+            font-weight: 800;
+        }
+        .risk-high {
+            color: #b91c1c;
+            font-weight: 800;
+        }
+        .stButton > button {
+            border-radius: 8px;
+            font-weight: 700;
+            height: 42px;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📁 LOAD MODEL & DATA
-# ═══════════════════════════════════════════════════════════════════════════
 
 @st.cache_resource
-def load_model_artifacts():
-    """Charger les artifacts du modèle"""
-    model = joblib.load('models/random_forest_model.joblib')
-    scaler = joblib.load('models/scaler.joblib')
-    encoders = joblib.load('models/label_encoders.joblib')
-    
-    with open('models/feature_names.json') as f:
-        features = json.load(f)
-    
-    with open('models/model_metadata.json') as f:
-        metadata = json.load(f)
-    
-    return model, scaler, encoders, features, metadata
+def load_artifacts():
+    model = joblib.load(MODEL_PATH)
+    metadata = json.loads(METADATA_PATH.read_text())
+    comparison = json.loads(COMPARISON_PATH.read_text())
+    features = json.loads(FEATURES_PATH.read_text())
+    return model, metadata, comparison, features
+
 
 @st.cache_data
-def load_dataset():
-    """Charger le dataset complet"""
-    df = pd.read_csv('data/customer_churn_business_dataset.csv')
-    return df
+def load_data():
+    return pd.read_csv(DATA_PATH)
 
-# Charger les données
-model, scaler, encoders, features_info, model_metadata = load_model_artifacts()
-df = load_dataset()
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 🎨 HEADER
-# ═══════════════════════════════════════════════════════════════════════════
+@st.cache_data
+def load_shap_outputs():
+    global_df = pd.read_csv(SHAP_GLOBAL_PATH) if SHAP_GLOBAL_PATH.exists() else pd.DataFrame()
+    local_df = pd.read_csv(SHAP_LOCAL_PATH) if SHAP_LOCAL_PATH.exists() else pd.DataFrame()
+    return global_df, local_df
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.markdown("# 🎯 CUSTOMER CHURN PREDICTION")
-    st.markdown("### 📊 Advanced Analytics & Real-time Predictions")
 
-st.markdown("---")
+def pct(value: float) -> str:
+    return f"{value:.1%}"
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📌 SIDEBAR - NAVIGATION
-# ═══════════════════════════════════════════════════════════════════════════
+
+def money(value: float) -> str:
+    return f"{value:,.0f} €".replace(",", " ")
+
+
+def mode_or_first(series: pd.Series):
+    mode = series.dropna().mode()
+    return mode.iloc[0] if not mode.empty else series.dropna().iloc[0]
+
+
+def baseline_client(df: pd.DataFrame, feature_order: list[str]) -> dict:
+    row = {}
+    for col in feature_order:
+        if pd.api.types.is_numeric_dtype(df[col]):
+            row[col] = float(df[col].median())
+        else:
+            row[col] = mode_or_first(df[col])
+    return row
+
+
+def risk_label(probability: float, threshold: float) -> tuple[str, str]:
+    if probability >= max(0.7, threshold):
+        return "Risque élevé", "risk-high"
+    if probability >= threshold:
+        return "Risque moyen", "risk-medium"
+    return "Risque faible", "risk-low"
+
+
+def prediction_form(df: pd.DataFrame, feature_order: list[str]) -> pd.DataFrame:
+    st.markdown('<div class="section-title">Simulation client</div>', unsafe_allow_html=True)
+    st.caption("Les autres variables sont complétées automatiquement avec un profil client médian du dataset.")
+
+    client = baseline_client(df, feature_order)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        client["customer_segment"] = st.selectbox("Segment client", sorted(df["customer_segment"].dropna().unique()))
+        client["contract_type"] = st.selectbox("Type de contrat", sorted(df["contract_type"].dropna().unique()))
+        client["tenure_months"] = st.slider("Ancienneté (mois)", 0, 72, 18)
+        client["monthly_fee"] = st.slider("Abonnement mensuel (€)", 0.0, 300.0, 50.0, 5.0)
+        client["total_revenue"] = max(client["monthly_fee"] * max(client["tenure_months"], 1), client["monthly_fee"])
+
+    with col2:
+        client["monthly_logins"] = st.slider("Connexions mensuelles", 0, 40, 10)
+        client["csat_score"] = st.slider("Satisfaction CSAT", 1.0, 5.0, 3.5, 0.1)
+        client["payment_failures"] = st.slider("Échecs de paiement", 0, 10, 1)
+        client["support_tickets"] = st.slider("Tickets support", 0, 25, 2)
+        client["nps_score"] = st.slider("NPS", -100, 100, 20)
+
+    client["weekly_active_days"] = min(7, max(0, round(client["monthly_logins"] / 4)))
+    client["last_login_days_ago"] = max(0, int(18 - client["monthly_logins"] / 2))
+    client["avg_session_time"] = max(5.0, float(client.get("avg_session_time", 30)))
+    client["features_used"] = max(1, int(client.get("features_used", 6)))
+    client["usage_growth_rate"] = -0.2 if client["monthly_logins"] < 5 else 0.05
+    client["email_open_rate"] = max(0.0, min(1.0, float(client.get("email_open_rate", 0.55))))
+    client["marketing_click_rate"] = max(0.0, min(1.0, float(client.get("marketing_click_rate", 0.2))))
+    client["avg_resolution_time"] = float(client.get("avg_resolution_time", 24))
+    client["escalations"] = 1 if client["support_tickets"] >= 5 else 0
+
+    return pd.DataFrame([client], columns=feature_order)
+
+
+def recommendations(client: pd.Series, probability: float, threshold: float) -> list[str]:
+    actions = []
+    if probability >= max(0.7, threshold):
+        actions.append("Contacter le client rapidement avec une offre de rétention ciblée.")
+    elif probability >= threshold:
+        actions.append("Planifier une action CRM proactive dans la semaine.")
+    else:
+        actions.append("Maintenir le suivi relationnel standard.")
+
+    if client["csat_score"] < 3:
+        actions.append("Traiter le sujet satisfaction : diagnostic support ou appel qualité.")
+    if client["monthly_logins"] < 5:
+        actions.append("Relancer l'engagement produit avec onboarding ou campagne de réactivation.")
+    if client["payment_failures"] >= 2:
+        actions.append("Proposer une assistance facturation ou une facilité de paiement.")
+    if client["contract_type"] == "Monthly":
+        actions.append("Tester une incitation vers un contrat plus long.")
+    return actions
+
+
+def plot_card(fig):
+    fig.update_layout(
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(l=20, r=20, t=55, b=35),
+        font=dict(color="#152235"),
+        title_font=dict(size=16, color="#152235"),
+    )
+    return fig
+
+
+model, metadata, comparison, features = load_artifacts()
+df = load_data()
+shap_global, shap_local = load_shap_outputs()
+
+st.markdown(
+    f"""
+    <div class="hero">
+        <h1>Retention Cockpit</h1>
+        <p>Suivi du churn, priorisation des clients à risque et simulation en temps réel avec le modèle final : <b>{metadata["model_type"]}</b>.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 with st.sidebar:
-    st.markdown("## 🧭 NAVIGATION")
-    page = st.radio(
-        "Sélectionner une page:",
-        ["📊 Dashboard", "🔮 Prédictions", "📈 Modèle Info", "📑 Données"]
-    )
-    
-    st.markdown("---")
-    st.markdown("### 📋 MODÈLE INFO")
-    st.metric("Accuracy", f"{model_metadata['accuracy']:.1%}")
-    st.metric("ROC-AUC", f"{model_metadata['roc_auc']:.1%}")
-    st.metric("Features", model_metadata['n_features'])
-    
-    st.markdown("---")
-    st.markdown("### 📅 METADATA")
-    st.write(f"**Date d'entraînement:** {model_metadata['training_date'].split('T')[0]}")
-    st.write(f"**Type:** {model_metadata['model_type']}")
+    st.markdown("### Navigation")
+    page = st.radio("", ["Pilotage", "Prédiction", "Modèles", "Explicabilité", "Données"], label_visibility="collapsed")
+    st.divider()
+    st.markdown("### Modèle")
+    st.metric("Type", metadata["model_type"])
+    st.metric("ROC-AUC", pct(metadata["roc_auc"]))
+    st.metric("F1", f"{metadata['f1_score']:.3f}")
+    st.metric("Seuil", f"{metadata['threshold']:.3f}")
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📊 PAGE 1: DASHBOARD
-# ═══════════════════════════════════════════════════════════════════════════
 
-if page == "📊 Dashboard":
-    # --- KPI Section ---
-    st.markdown("## 📈 KPI PRINCIPAUX")
-    
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    total_customers = len(df)
-    churn_customers = (df['churn'] == 1).sum()
-    churn_rate = churn_customers / total_customers
-    no_churn_customers = total_customers - churn_customers
-    
-    with col1:
-        st.metric("👥 Total Clients", f"{total_customers:,}", "clients")
-    
-    with col2:
-        st.metric("🔴 En Churn", f"{churn_customers:,}", f"{churn_rate:.1%}")
-    
-    with col3:
-        st.metric("🟢 Fidèles", f"{no_churn_customers:,}", f"{1-churn_rate:.1%}")
-    
-    with col4:
-        st.metric("✅ Accuracy", f"{model_metadata['accuracy']:.1%}")
-    
-    with col5:
-        st.metric("📊 ROC-AUC", f"{model_metadata['roc_auc']:.1%}")
-    
-    st.markdown("---")
-    
-    # --- Distribution Churn ---
-    st.markdown("## 📊 ANALYSE CHURN")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Pie Chart
-        churn_counts = df['churn'].value_counts()
-        fig_pie = go.Figure(data=[go.Pie(
-            labels=['Non-Churn', 'Churn'],
-            values=[churn_counts[0], churn_counts[1]],
-            marker=dict(colors=['#2ecc71', '#e74c3c']),
-            textinfo='label+percent'
-        )])
-        fig_pie.update_layout(title="Distribution Churn/Non-Churn", height=400)
-        st.plotly_chart(fig_pie, use_container_width=True)
-    
-    with col2:
-        # Churn by Segment
-        churn_by_segment = df.groupby('customer_segment')['churn'].agg(['sum', 'count'])
-        churn_by_segment['rate'] = churn_by_segment['sum'] / churn_by_segment['count']
-        
-        fig_segment = go.Figure(data=[
-            go.Bar(x=churn_by_segment.index, y=churn_by_segment['rate']*100, marker_color='#3498db')
-        ])
-        fig_segment.update_layout(
-            title="Taux de Churn par Segment",
-            xaxis_title="Customer Segment",
-            yaxis_title="Churn Rate (%)",
-            height=400
+if page == "Pilotage":
+    churn_count = int(df["churn"].sum())
+    churn_rate = float(df["churn"].mean())
+    revenue_at_risk = float(df.loc[df["churn"] == 1, "monthly_fee"].sum())
+    avg_fee_churn = float(df.loc[df["churn"] == 1, "monthly_fee"].mean())
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Clients", f"{len(df):,}".replace(",", " "))
+    col2.metric("Clients churn", f"{churn_count:,}".replace(",", " "), pct(churn_rate))
+    col3.metric("MRR à risque observé", money(revenue_at_risk))
+    col4.metric("Abonnement moyen churn", money(avg_fee_churn))
+
+    st.markdown('<div class="section-title">Lecture métier</div>', unsafe_allow_html=True)
+    left, right = st.columns([1.1, 1])
+    with left:
+        seg = df.groupby("customer_segment", as_index=False)["churn"].mean().sort_values("churn", ascending=False)
+        fig = px.bar(seg, x="customer_segment", y="churn", title="Taux de churn par segment", color="churn", color_continuous_scale=["#99f6e4", "#2563eb"])
+        fig.update_yaxes(tickformat=".0%")
+        fig.update_layout(showlegend=False, coloraxis_showscale=False)
+        st.plotly_chart(plot_card(fig), use_container_width=True)
+    with right:
+        contract = df.groupby("contract_type", as_index=False)["churn"].mean().sort_values("churn", ascending=False)
+        fig = px.bar(contract, x="contract_type", y="churn", title="Churn par type de contrat", color="churn", color_continuous_scale=["#bfdbfe", "#dc2626"])
+        fig.update_yaxes(tickformat=".0%")
+        fig.update_layout(showlegend=False, coloraxis_showscale=False)
+        st.plotly_chart(plot_card(fig), use_container_width=True)
+
+    col_a, col_b = st.columns([1.15, 0.85])
+    with col_a:
+        if not shap_global.empty:
+            importance = shap_global.rename(columns={"mean_abs_shap": "importance"}).head(10)
+            title = "Variables les plus influentes selon SHAP"
+        else:
+            importance = pd.DataFrame(metadata["feature_importance"]).head(10)
+            title = "Variables les plus influentes"
+        fig = px.bar(
+            importance.sort_values("importance"),
+            x="importance",
+            y="feature",
+            orientation="h",
+            title=title,
+            color_discrete_sequence=["#0f766e"],
         )
-        st.plotly_chart(fig_segment, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # --- Model Performance ---
-    st.markdown("## 🏆 PERFORMANCE DU MODÈLE")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        metrics_data = {
-            'Metric': ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'ROC-AUC'],
-            'Value': [0.8975, 0.7850, 0.6420, 0.7061, 0.7914]
-        }
-        metrics_df = pd.DataFrame(metrics_data)
-        
-        fig_metrics = go.Figure(data=[
-            go.Bar(x=metrics_df['Metric'], y=metrics_df['Value']*100, marker_color='#9b59b6')
-        ])
-        fig_metrics.update_layout(
-            title="Métriques de Performance",
-            xaxis_title="Métrique",
-            yaxis_title="Score (%)",
-            height=400,
-            yaxis=dict(range=[0, 100])
-        )
-        st.plotly_chart(fig_metrics, use_container_width=True)
-    
-    with col2:
-        # Confusion Matrix
-        confusion_data = [[1795, 205], [580, 420]]
-        
-        fig_cm = go.Figure(data=go.Heatmap(
-            z=confusion_data,
-            x=['Predicted No', 'Predicted Yes'],
-            y=['Actual No', 'Actual Yes'],
-            text=confusion_data,
-            texttemplate='%{text}',
-            colorscale='Blues'
-        ))
-        fig_cm.update_layout(title="Matrice de Confusion", height=400)
-        st.plotly_chart(fig_cm, use_container_width=True)
-    
-    st.markdown("---")
-    
-    # --- Top Features ---
-    st.markdown("## ⭐ TOP FEATURES")
-    
-    top_features_data = {
-        'Feature': ['csat_score', 'tenure_months', 'monthly_logins', 'total_revenue', 'payment_failures'],
-        'Importance': [0.1084, 0.0887, 0.0829, 0.0667, 0.0588]
-    }
-    top_features_df = pd.DataFrame(top_features_data)
-    
-    fig_features = go.Figure(data=[
-        go.Bar(x=top_features_df['Importance'], y=top_features_df['Feature'], orientation='h', marker_color='#e74c3c')
-    ])
-    fig_features.update_layout(
-        title="Top 5 Features - Feature Importance",
-        xaxis_title="Importance Score",
-        height=400
-    )
-    st.plotly_chart(fig_features, use_container_width=True)
+        st.plotly_chart(plot_card(fig), use_container_width=True)
+    with col_b:
+        st.markdown('<div class="insight-box">', unsafe_allow_html=True)
+        st.markdown("**Priorités opérationnelles**")
+        st.write("- Surveiller satisfaction, paiement et engagement.")
+        st.write("- Adapter les campagnes selon segment et contrat.")
+        st.write("- Utiliser le seuil métier plutôt que l'accuracy seule.")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 🔮 PAGE 2: PREDICTIONS
-# ═══════════════════════════════════════════════════════════════════════════
 
-elif page == "🔮 Prédictions":
-    st.markdown("## 🔮 PRÉDICTION CLIENT INDIVIDUEL")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.markdown("### 📝 ENTRER LES DONNÉES DU CLIENT")
-        
-        # Inputs
-        age = st.slider("Age", min_value=18, max_value=80, value=35)
-        tenure_months = st.slider("Ancienneté (mois)", min_value=0, max_value=60, value=24)
-        monthly_logins = st.slider("Connexions mensuelles", min_value=0, max_value=30, value=10)
-        csat_score = st.slider("Score CSAT", min_value=1.0, max_value=5.0, value=3.5, step=0.1)
-        total_revenue = st.slider("Revenu total", min_value=0, max_value=1000, value=500)
-        payment_failures = st.slider("Défauts de paiement", min_value=0, max_value=10, value=1)
-        
-        customer_segment = st.selectbox("Segment", ['Standard', 'Premium', 'Basic', 'VIP'])
-        contract_type = st.selectbox("Type contrat", ['Monthly', 'Annual', 'Two year'])
-        
-        predict_btn = st.button("🚀 PRÉDIRE", use_container_width=True)
-    
-    with col2:
-        if predict_btn:
-            # Préparer les données
-            from sklearn.preprocessing import StandardScaler, LabelEncoder
-            
-            # Créer un dictionnaire avec les données
-            input_data = {
-                'age': age,
-                'tenure_months': tenure_months,
-                'monthly_logins': monthly_logins,
-                'csat_score': csat_score,
-                'total_revenue': total_revenue,
-                'payment_failures': payment_failures,
-                'customer_segment': customer_segment,
-                'contract_type': contract_type
+elif page == "Prédiction":
+    left, right = st.columns([0.95, 1.05])
+    with left:
+        client_df = prediction_form(df, features["all_features"])
+        predict = st.button("Prédire le risque de churn", type="primary", use_container_width=True)
+
+    with right:
+        st.markdown('<div class="section-title">Résultat de prédiction</div>', unsafe_allow_html=True)
+        if predict:
+            probability = float(model.predict_proba(client_df[features["all_features"]])[:, 1][0])
+            prediction = int(probability >= metadata["threshold"])
+            expected_loss = float(client_df.loc[0, "monthly_fee"] * probability)
+            label, css_class = risk_label(probability, metadata["threshold"])
+
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Probabilité churn", pct(probability))
+            c2.metric("Décision", "À risque" if prediction else "Non prioritaire")
+            c3.metric("MRR à risque", f"{expected_loss:.2f} €")
+
+            fig = go.Figure(
+                go.Indicator(
+                    mode="gauge+number",
+                    value=probability * 100,
+                    number={"suffix": "%", "font": {"size": 34}},
+                    title={"text": "Score de churn"},
+                    gauge={
+                        "axis": {"range": [0, 100]},
+                        "bar": {"color": "#2563eb"},
+                        "steps": [
+                            {"range": [0, metadata["threshold"] * 100], "color": "#dcfce7"},
+                            {"range": [metadata["threshold"] * 100, 70], "color": "#fef3c7"},
+                            {"range": [70, 100], "color": "#fee2e2"},
+                        ],
+                        "threshold": {
+                            "line": {"color": "#111827", "width": 4},
+                            "thickness": 0.8,
+                            "value": metadata["threshold"] * 100,
+                        },
+                    },
+                )
+            )
+            fig.update_layout(height=310, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor="white")
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown(f'<div class="insight-box"><span class="{css_class}">{label}</span><br><br>', unsafe_allow_html=True)
+            for action in recommendations(client_df.iloc[0], probability, metadata["threshold"]):
+                st.write(f"- {action}")
+            st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.markdown(
+                """
+                <div class="insight-box">
+                    <b>Prêt pour une simulation.</b><br><br>
+                    Ajuste quelques paramètres client, puis lance la prédiction.
+                    Le modèle complète automatiquement les autres variables avec un profil médian.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+
+elif page == "Modèles":
+    rows = []
+    for item in comparison["models"]:
+        rows.append(
+            {
+                "Modèle": item["model"],
+                "Accuracy": item["accuracy"],
+                "Precision": item["precision"],
+                "Recall": item["recall"],
+                "F1": item["f1_score"],
+                "ROC-AUC": item["roc_auc"],
+                "Seuil": item["threshold"],
             }
-            
-            # Afficher les résultats
-            st.markdown("### 🎯 RÉSULTATS DE PRÉDICTION")
-            
-            # Simulation - prédiction basique
-            churn_risk = min(100, max(0, 
-                (100 - csat_score*15) + 
-                (10 - tenure_months/6) + 
-                (30 - monthly_logins*2) +
-                (payment_failures * 5)
-            ))
-            
-            churn_pred = "🔴 RISQUE ÉLEVÉ" if churn_risk > 60 else "🟡 RISQUE MOYEN" if churn_risk > 30 else "🟢 RISQUE FAIBLE"
-            
-            # Metrics
-            col1_pred, col2_pred, col3_pred = st.columns(3)
-            
-            with col1_pred:
-                st.metric("Probabilité Churn", f"{churn_risk:.1f}%")
-            
-            with col2_pred:
-                st.metric("Prédiction", churn_pred)
-            
-            with col3_pred:
-                st.metric("Confiance", f"{min(100, abs(churn_risk-50)/50*100):.1f}%")
-            
-            # Gauge Chart
-            fig_gauge = go.Figure(go.Indicator(
-                mode="gauge+number+delta",
-                value=churn_risk,
-                domain={'x': [0, 1], 'y': [0, 1]},
-                title={'text': "Churn Risk Score"},
-                delta={'reference': 50},
-                gauge={
-                    'axis': {'range': [0, 100]},
-                    'bar': {'color': "darkblue"},
-                    'steps': [
-                        {'range': [0, 33], 'color': "#2ecc71"},
-                        {'range': [33, 66], 'color': "#f39c12"},
-                        {'range': [66, 100], 'color': "#e74c3c"}
-                    ],
-                    'threshold': {
-                        'line': {'color': "red", 'width': 4},
-                        'thickness': 0.75,
-                        'value': 60
-                    }
-                }
-            ))
-            fig_gauge.update_layout(height=400)
-            st.plotly_chart(fig_gauge, use_container_width=True)
-            
-            # Recommandations
-            st.markdown("### 💡 RECOMMANDATIONS")
-            
-            recommendations = []
-            
-            if csat_score < 3:
-                recommendations.append("⚠️ Satisfaction client TRÈS FAIBLE - Action urgente recommandée")
-            if tenure_months < 12:
-                recommendations.append("⚠️ Client récent - Mettre en place un programme de rétention")
-            if monthly_logins < 5:
-                recommendations.append("⚠️ Faible engagement - Augmenter la valeur perçue")
-            if payment_failures > 2:
-                recommendations.append("⚠️ Problèmes de paiement - Contacter le client")
-            
-            if not recommendations:
-                recommendations.append("✅ Client en bonne santé - Maintenir la relation")
-            
-            for rec in recommendations:
-                st.info(rec)
+        )
+    results_df = pd.DataFrame(rows).sort_values("ROC-AUC", ascending=False)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📈 PAGE 3: MODEL INFO
-# ═══════════════════════════════════════════════════════════════════════════
+    st.markdown('<div class="section-title">Comparaison quantitative</div>', unsafe_allow_html=True)
+    st.dataframe(results_df, use_container_width=True, hide_index=True)
 
-elif page == "📈 Modèle Info":
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("## 🤖 INFORMATION MODÈLE")
-        
-        st.markdown(f"""
-        **Type:** {model_metadata['model_type']}
-        
-        **Hyperparamètres:**
-        - n_estimators: {model_metadata['n_estimators']}
-        - random_state: 42
-        - class_weight: balanced
-        - n_jobs: -1
-        
-        **Données d'entraînement:**
-        - Total samples: {model_metadata['test_set_size']} (test set)
-        - Features: {model_metadata['n_features']}
-        - Classes: {model_metadata['n_classes']}
-        - Class names: {', '.join(model_metadata['class_names'])}
-        """)
-    
-    with col2:
-        st.markdown("## 📊 PERFORMANCES")
-        
-        st.markdown(f"""
-        **Métriques:**
-        - Accuracy: **{model_metadata['accuracy']:.1%}**
-        - ROC-AUC: **{model_metadata['roc_auc']:.1%}**
-        
-        **Date d'entraînement:** {model_metadata['training_date']}
-        
-        **Architecture des données:**
-        - Train/Test split: 80/20 (stratified)
-        - Preprocessing: StandardScaler + LabelEncoder
-        """)
-    
-    st.markdown("---")
-    
-    # Feature List
-    st.markdown("## 📋 LISTE DES FEATURES")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### Numériques")
-        for feat in features_info['numerical_features']:
-            st.write(f"• {feat}")
-    
-    with col2:
-        st.markdown("### Catégorielles")
-        for feat in features_info['categorical_features']:
-            st.write(f"• {feat}")
+    chart_df = results_df.melt(id_vars="Modèle", value_vars=["Accuracy", "Precision", "Recall", "F1", "ROC-AUC"])
+    fig = px.bar(
+        chart_df,
+        x="Modèle",
+        y="value",
+        color="variable",
+        barmode="group",
+        title="Performance des modèles",
+        color_discrete_sequence=["#2563eb", "#0f766e", "#f59e0b", "#dc2626", "#64748b"],
+    )
+    fig.update_yaxes(range=[0, 1])
+    st.plotly_chart(plot_card(fig), use_container_width=True)
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📑 PAGE 4: DATA
-# ═══════════════════════════════════════════════════════════════════════════
-
-elif page == "📑 Données":
-    st.markdown("## 📊 DATASET EXPLORER")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Nombre de lignes", len(df))
-    
-    with col2:
-        st.metric("Nombre de colonnes", len(df.columns))
-    
-    with col3:
-        st.metric("Taille (MB)", f"{df.memory_usage(deep=True).sum() / 1024**2:.2f}")
-    
-    st.markdown("---")
-    
-    # Data preview
-    st.markdown("### 📋 Aperçu des données")
-    st.dataframe(df.head(20), use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Statistics
-    st.markdown("### 📈 STATISTIQUES")
-    
-    st.dataframe(df.describe(), use_container_width=True)
-    
-    st.markdown("---")
-    
-    # Download
-    st.markdown("### 💾 TÉLÉCHARGER")
-    
-    csv = df.to_csv(index=False)
-    st.download_button(
-        label="📥 Télécharger les données (CSV)",
-        data=csv,
-        file_name=f"churn_data_{datetime.now().strftime('%Y%m%d')}.csv",
-        mime="text/csv"
+    st.markdown(
+        f"""
+        <div class="insight-box">
+            <b>Choix du modèle.</b> Le modèle final est <b>{metadata["model_type"]}</b>,
+            sélectionné sur le ROC-AUC. Le seuil de décision est ajusté sur validation
+            pour éviter un F1 nul dans un contexte de classes déséquilibrées.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
-# ═══════════════════════════════════════════════════════════════════════════
-# 📌 FOOTER
-# ═══════════════════════════════════════════════════════════════════════════
 
-st.markdown("---")
-st.markdown("""
-<div style='text-align: center'>
-    <p>🚀 <b>Customer Churn Prediction Dashboard</b> | Built with Streamlit</p>
-    <p style='font-size: 12px; color: gray'>Last updated: """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """</p>
-</div>
-""", unsafe_allow_html=True)
-    with col2:
-        login_frequency = st.slider("Fréquence de connexion (par mois)", 0, 30, 15)
-        support_tickets = st.slider("Tickets support", 0, 10, 2)
-        nps_score = st.slider("Score NPS", 0, 10, 7)
-    
-    if st.button("🚀 Prédire le Churn"):
-        st.success("✅ Prédiction générée")
-        st.write("Probabilité de churn : **45.2%** ⚠️")
+elif page == "Explicabilité":
+    st.markdown('<div class="section-title">Explicabilité du modèle avec SHAP</div>', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class="insight-box">
+            SHAP permet d'expliquer l'influence des variables sur les prédictions du modèle.
+            Les valeurs affichées concernent la classe churn. Une valeur SHAP positive pousse
+            la prédiction vers un risque plus élevé, tandis qu'une valeur négative réduit ce risque.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
+    if shap_global.empty:
+        st.warning("Les fichiers SHAP ne sont pas encore générés. Lancez python shap_analysis.py.")
+    else:
+        c1, c2 = st.columns([1.1, 0.9])
+        with c1:
+            fig = px.bar(
+                shap_global.head(15).sort_values("mean_abs_shap"),
+                x="mean_abs_shap",
+                y="feature",
+                orientation="h",
+                title="Importance globale SHAP",
+                color_discrete_sequence=["#1f4e79"],
+            )
+            st.plotly_chart(plot_card(fig), use_container_width=True)
+        with c2:
+            st.markdown('<div class="insight-box">', unsafe_allow_html=True)
+            st.markdown("**Top variables globales**")
+            for _, row in shap_global.head(6).iterrows():
+                st.write(f"- {row['feature']} : {row['mean_abs_shap']:.4f}")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-def show_eda():
-    """Page d'analyse EDA"""
-    st.header("📈 Analyse Exploratoire des Données")
-    
-    st.markdown("""
-    Cette section affiche les visualisations de l'analyse exploratoire :
-    - Distribution des clients
-    - Corrélations entre variables
-    - Impact des features sur le churn
-    """)
-    
-    st.info("📌 Les visualisations EDA seront chargées une fois les données traitées")
+        if SHAP_BEESWARM_PATH.exists():
+            st.image(str(SHAP_BEESWARM_PATH), caption="Distribution des effets SHAP sur l'échantillon de test")
 
-
-def show_model_comparison():
-    """Page de comparaison des modèles"""
-    st.header("🏆 Comparaison des Modèles")
-    
-    # Créer des données de comparaison factices
-    models_data = {
-        'Model': ['Logistic Regression', 'Random Forest', 'XGBoost', 'MLP'],
-        'Accuracy': [0.85, 0.91, 0.94, 0.92],
-        'Precision': [0.82, 0.89, 0.92, 0.90],
-        'Recall': [0.78, 0.87, 0.91, 0.88],
-        'F1': [0.80, 0.88, 0.91, 0.89],
-        'ROC-AUC': [0.88, 0.94, 0.97, 0.95]
-    }
-    
-    df_models = pd.DataFrame(models_data)
-    
-    st.dataframe(df_models, use_container_width=True)
-    
-    # Graphique
-    fig = px.bar(df_models, x='Model', y=['Accuracy', 'Precision', 'Recall', 'F1'],
-                 title="Comparaison des Performances")
-    st.plotly_chart(fig, use_container_width=True)
-
-
-def show_about():
-    """Page À propos"""
-    st.header("ℹ️ À propos du Projet")
-    
-    st.markdown("""
-    ### 🎓 Système Intelligent Multi-Modèles pour la Rétention Client
-    
-    **Projet Data Science EFREI 2025-26**
-    
-    Ce système a été développé pour :
-    - 🔮 Prédire le risque de churn (résiliation client)
-    - 📊 Analyser les facteurs de fidélisation
-    - 🏆 Comparer plusieurs algorithmes
-    - 💼 Fournir des décisions orientées métier
-    
-    ### 🛠️ Technologies Utilisées
-    - Python 3.10+
-    - Scikit-learn (ML classique)
-    - XGBoost & LightGBM (Gradient Boosting)
-    - TensorFlow/Keras (Deep Learning)
-    - SHAP (Explicabilité)
-    - Streamlit (Dashboard)
-    
-    ### 👥 Auteurs
-    EFREI - Master 2 Data Engineering & AI
-    """)
+        st.markdown('<div class="section-title">Exemples locaux</div>', unsafe_allow_html=True)
+        if not shap_local.empty:
+            selected = st.selectbox(
+                "Client expliqué",
+                sorted(shap_local["rank"].unique()),
+                format_func=lambda x: f"Exemple {x}",
+            )
+            local_view = shap_local[shap_local["rank"] == selected].copy()
+            probability = float(local_view["predicted_probability"].iloc[0])
+            st.metric("Probabilité prédite", pct(probability))
+            local_view["impact"] = local_view["shap_value"].map(lambda v: "Augmente le risque" if v > 0 else "Réduit le risque")
+            st.dataframe(
+                local_view[["feature", "shap_value", "impact"]].rename(
+                    columns={"feature": "Variable", "shap_value": "Valeur SHAP", "impact": "Impact"}
+                ),
+                use_container_width=True,
+                hide_index=True,
+            )
 
 
-if __name__ == "__main__":
-    main()
+else:
+    st.markdown('<div class="section-title">Exploration du dataset</div>', unsafe_allow_html=True)
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Lignes", f"{len(df):,}".replace(",", " "))
+    col2.metric("Colonnes", len(df.columns))
+    col3.metric("Taux churn", pct(float(df["churn"].mean())))
+
+    st.dataframe(df.head(50), use_container_width=True, hide_index=True)
+    with st.expander("Statistiques descriptives"):
+        st.dataframe(df.describe(include="all"), use_container_width=True)
+
+st.caption(f"Dernière mise à jour : {datetime.now():%Y-%m-%d %H:%M}")

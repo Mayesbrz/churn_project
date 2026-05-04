@@ -1,142 +1,118 @@
-# 🎯 Système Intelligent Multi-Modèles pour la Rétention Client
+# Système intelligent multi-modèles pour la rétention client
 
-Projet Data Science EFREI 2025-26 - Expert en Ingénierie de Données (RNCP36739)
+Projet Data Science EFREI M2 - prédiction du churn client, comparaison ML/DL, dashboard Streamlit et API optionnelle.
 
-## 📋 Description du Projet
+## État du projet
 
-Concevoir et développer une plateforme intelligente de rétention client capable de :
-- **Prédire le risque de churn** (résiliation client)
-- **Évaluer le revenu à risque**
-- **Comparer plusieurs algorithmes** (ML classique + Deep Learning)
-- **Fournir un dashboard décisionnel** interactif
-- **Exposer un service via API REST** (optionnel)
+- Dataset : `data/customer_churn_business_dataset.csv` (10000 clients).
+- Cible : `churn` (classification binaire).
+- Modèles comparés : Logistic Regression, Random Forest, Gradient Boosting, MLP.
+- Modèle final : **Gradient Boosting**.
+- Performance test : ROC-AUC **0.8058**, F1 **0.3802**, Recall **0.8480**.
+- Le seuil de décision est optimisé sur validation pour éviter le problème `F1 = 0` sur la classe churn.
+- Dashboard : autonome, il charge le modèle localement et ne dépend pas de l'API.
+- API : disponible en bonus, mais optionnelle.
 
-## 📊 Dataset
+## Structure
 
-- **Source** : Kaggle - Customer Churn Prediction Business Dataset
-- **Taille** : 10,000 clients
-- **Variables** : 40+ features (numériques + catégorielles)
-- **Cible principal** : `churn` (0 = Fidèle, 1 = Résiliation)
-
-## 🏗️ Structure du Projet
-
-```
-project_root/
-├── data/
-│   └── customer_churn_business_dataset.csv
-├── notebooks/
-│   ├── 01_eda.ipynb
-│   └── 02_modeling.ipynb
-├── src/
-│   ├── __init__.py
-│   ├── data_processing.py      # Nettoyage & préparation
-│   ├── modeling.py             # Entraînement des modèles
-│   ├── evaluation.py           # Métriques & comparaisons
-│   ├── explainability.py       # SHAP & Feature Importance
-│   └── utils.py                # Fonctions utilitaires
-├── models/
-│   └── (modèles sérialisés .pkl/.joblib)
-├── app/
-│   ├── __init__.py
-│   ├── dashboard.py            # Streamlit
-│   └── api.py                  # FastAPI (optionnel)
-├── reports/
-│   └── (figures & résultats)
-├── requirements.txt
-├── .gitignore
-├── README.md
-└── main.py                     # Point d'entrée
+```text
+data/                         Dataset
+src/                          Modules data/model/evaluation/explainability
+models/                       Pipelines et métriques exportés
+app/dashboard.py              Dashboard Streamlit
+app/api.py                    API FastAPI optionnelle
+reports/reports.docx          Rapport corrigé
+reports/presentation_churn_retention.pptx  Support de présentation
+train_all_models.py           Entraînement reproductible multi-modèles
+build_final_report.py         Génération du rapport Word
+build_presentation.mjs        Génération du support PPTX
 ```
 
-## 🚀 Installation & Configuration
+## Reproduire l'entraînement
 
-### 1. Cloner le projet
-```bash
-cd "/Users/amayasbariz/Documents/dossier sans titre/projet ds/churn"
-```
-
-### 2. Activer l'environnement virtuel
 ```bash
 source .venv/bin/activate
+python train_all_models.py
 ```
 
-### 3. Installer les dépendances
-```bash
-pip install -r requirements.txt
-```
+Le script effectue : split stratifié, preprocessing dans `Pipeline`, cross-validation, optimisation du seuil, comparaison des modèles et export des artefacts.
 
-## 📝 Étapes du Projet
+## Lancer le dashboard
 
-### Étape 1 : EDA (Exploratory Data Analysis)
 ```bash
-jupyter notebook notebooks/01_eda.ipynb
-```
-
-### Étape 2 : Modélisation
-```bash
-jupyter notebook notebooks/02_modeling.ipynb
-```
-
-### Étape 3 : Dashboard Streamlit
-```bash
+source .venv/bin/activate
 streamlit run app/dashboard.py
 ```
 
-### Étape 4 : API REST (optionnel)
+## Lancer l'API optionnelle
+
 ```bash
+source .venv/bin/activate
 uvicorn app.api:app --reload
 ```
 
-## 🎓 Modèles à Implémenter
+Endpoints principaux : `/health`, `/predict`, `/batch_predict`, `/model/info`.
 
-1. **Baseline Simple** : Régression Logistique
-2. **Tree-Based** : Random Forest
-3. **Gradient Boosting** : XGBoost ou LightGBM
-4. **Deep Learning** : MLP (Keras/TensorFlow)
+## Résultats modèles
 
-**Comparaison rigoureuse** via :
-- Accuracy, Precision, Recall, F1, ROC-AUC (classification)
-- Confusion Matrix
-- Feature Importance + SHAP
-- Cross-validation
+| Modèle | Accuracy | Precision | Recall | F1 | ROC-AUC | Seuil |
+|---|---:|---:|---:|---:|---:|---:|
+| Logistic Regression | 0.7680 | 0.2124 | 0.4706 | 0.2927 | 0.7245 | 0.600 |
+| Random Forest | 0.7320 | 0.2500 | 0.8137 | 0.3825 | 0.7890 | 0.325 |
+| Gradient Boosting | 0.7180 | 0.2450 | 0.8480 | 0.3802 | 0.8058 | 0.115 |
+| MLP | 0.6940 | 0.1928 | 0.6275 | 0.2949 | 0.7055 | 0.115 |
 
-## 📊 Dashboard Features
+## Notes méthodologiques
 
-- ✅ Visualisation des distributions clients
-- ✅ Analyse des facteurs de churn
-- ✅ Comparaison des modèles
-- ✅ Simulation de scénarios
-- ✅ Prédictions en temps réel
-- ✅ Importance des variables
+- `customer_id` est exclu des features pour éviter d'apprendre un identifiant non généralisable.
+- Les transformations sont apprises uniquement sur le train set via `ColumnTransformer`.
+- L'interprétabilité globale utilise la permutation importance du modèle final.
+- SHAP reste une amélioration possible pour l'explication locale de chaque prédiction.
 
-## 📚 Ressources
+## Étude du déséquilibre des classes
 
-- [Kaggle Dataset](https://www.kaggle.com/datasets/miadul/customer-churn-prediction-business-dataset)
-- [Scikit-learn Documentation](https://scikit-learn.org/)
-- [Streamlit Documentation](https://docs.streamlit.io/)
-- [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [SHAP Documentation](https://shap.readthedocs.io/)
+Consignes supplémentaires appliquées dans `imbalance_study.py`.
 
-## 👥 Auteurs
+- Classe 0 : 8979 clients.
+- Classe 1 : 1021 clients.
+- Ratio majorité/minorité : **8.79:1**.
+- Métriques utilisées : Recall, F1-score, ROC-AUC et **PR-AUC**.
+- Validation : Stratified K-Fold pour préserver les proportions de classes.
+- Méthodes comparées : baseline, `class_weight`, Random Over-Sampling, SMOTE, Random Under-Sampling, seuil optimisé.
+- Modèle final appliqué au dashboard : **Random Over-Sampling + Random Forest**.
+- Seuil final : **0.390**.
+- Résultats test : Precision **0.2629**, Recall **0.7990**, F1 **0.3956**, ROC-AUC **0.8010**, PR-AUC **0.2679**.
+- Matrice de confusion : FP=457, FN=41, TP=163, TN=1339.
 
-Projet collectif EFREI - M2 Data Engineering & AI
+Documentation complète : `reports/imbalance_study.md`.
+Résultats complets : `reports/imbalance_comparison.csv`.
+Synthèse par méthode : `reports/imbalance_best_by_strategy.csv`.
 
-## 📅 Dates Importants
+### Commandes
 
-- **Démarrage** : Avril 2026
-- **Deadline Moodle** : [À définir par l'enseignant]
-- **Présentation** : [À définir par l'enseignant]
+```bash
+source .venv/bin/activate
+python imbalance_study.py
+python apply_imbalance_final_model.py
+```
 
-## ⚠️ Recommandations
+## SHAP explainability
 
-- ✅ Commencer par une EDA approfondie
-- ✅ Vérifier les valeurs manquantes et déséquilibre des classes
-- ✅ Éviter le data leakage à tout prix
-- ✅ Utiliser des pipelines scikit-learn
-- ✅ Comparer rigoureusement (au moins 4 modèles)
-- ✅ Implémenter SHAP pour l'explicabilité
-- ✅ Versionner régulièrement avec Git
+SHAP a été ajouté pour expliquer le modèle final localement et globalement.
 
----
+Fichiers générés :
 
-**Good Luck! 🚀**
+- `reports/shap_global_importance.csv` : importance globale des variables pour la classe churn.
+- `reports/shap_local_examples.csv` : exemples de prédictions client expliquées variable par variable.
+- `reports/shap_summary_bar.png` : graphique d'importance globale.
+- `reports/shap_beeswarm.png` : distribution des effets SHAP.
+- `models/shap_explanations.json` : synthèse structurée des explications.
+
+Commande :
+
+```bash
+source .venv/bin/activate
+python shap_analysis.py
+```
+
+Le dashboard contient maintenant une page `Explicabilité` dédiée à SHAP.

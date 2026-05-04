@@ -1,0 +1,231 @@
+{
+  "created_at": "2026-05-04T12:04:35.193953",
+  "models": [
+    {
+      "model": "Logistic Regression",
+      "threshold": 0.6,
+      "accuracy": 0.768,
+      "precision": 0.21238938053097345,
+      "recall": 0.47058823529411764,
+      "f1_score": 0.2926829268292683,
+      "roc_auc": 0.7244666797676754,
+      "specificity": 0.8017817371937639,
+      "true_negatives": 1440,
+      "false_positives": 356,
+      "false_negatives": 108,
+      "true_positives": 96,
+      "validation_f1_at_threshold": 0.30115830115830117,
+      "cv": {
+        "accuracy": {
+          "mean": 0.6667500000000001,
+          "std": 0.009563929631694265
+        },
+        "precision": {
+          "mean": 0.1833602284067386,
+          "std": 0.00865822997935669
+        },
+        "recall": {
+          "mean": 0.6548032320814006,
+          "std": 0.027669481176215076
+        },
+        "f1": {
+          "mean": 0.2864637865026917,
+          "std": 0.012863066267344377
+        },
+        "roc_auc": {
+          "mean": 0.7173474443123155,
+          "std": 0.018447814756003406
+        }
+      }
+    },
+    {
+      "model": "Random Forest",
+      "threshold": 0.32499999999999996,
+      "accuracy": 0.732,
+      "precision": 0.25,
+      "recall": 0.8137254901960784,
+      "f1_score": 0.3824884792626728,
+      "roc_auc": 0.7889891479977291,
+      "specificity": 0.72271714922049,
+      "true_negatives": 1298,
+      "false_positives": 498,
+      "false_negatives": 38,
+      "true_positives": 166,
+      "validation_f1_at_threshold": 0.4131455399061033,
+      "cv": {
+        "accuracy": {
+          "mean": 0.878125,
+          "std": 0.0040117016339703
+        },
+        "precision": {
+          "mean": 0.30781128635826793,
+          "std": 0.03840764845448044
+        },
+        "recall": {
+          "mean": 0.15420469848870266,
+          "std": 0.01728564342153835
+        },
+        "f1": {
+          "mean": 0.20541807649739904,
+          "std": 0.02364598660858353
+        },
+        "roc_auc": {
+          "mean": 0.799169881083029,
+          "std": 0.013030770818122128
+        }
+      }
+    },
+    {
+      "model": "Gradient Boosting",
+      "threshold": 0.11499999999999999,
+      "accuracy": 0.718,
+      "precision": 0.24504249291784702,
+      "recall": 0.8480392156862745,
+      "f1_score": 0.3802197802197802,
+      "roc_auc": 0.8057966505087559,
+      "specificity": 0.7032293986636972,
+      "true_negatives": 1263,
+      "false_positives": 533,
+      "false_negatives": 31,
+      "true_positives": 173,
+      "validation_f1_at_threshold": 0.4011379800853485,
+      "cv": {
+        "accuracy": {
+          "mean": 0.895125,
+          "std": 0.000728868986855647
+        },
+        "precision": {
+          "mean": 0.42208990589190815,
+          "std": 0.018715602169229052
+        },
+        "recall": {
+          "mean": 0.07221307795900045,
+          "std": 0.0045480676921174
+        },
+        "f1": {
+          "mean": 0.12324638461874837,
+          "std": 0.006736055061104511
+        },
+        "roc_auc": {
+          "mean": 0.8034727735615614,
+          "std": 0.008484601328966326
+        }
+      }
+    },
+    {
+      "model": "MLP",
+      "threshold": 0.11499999999999999,
+      "accuracy": 0.694,
+      "precision": 0.1927710843373494,
+      "recall": 0.6274509803921569,
+      "f1_score": 0.29493087557603687,
+      "roc_auc": 0.7055084283156469,
+      "specificity": 0.7015590200445434,
+      "true_negatives": 1260,
+      "false_positives": 536,
+      "false_negatives": 76,
+      "true_positives": 128,
+      "validation_f1_at_threshold": 0.2772963604852686,
+      "cv": {
+        "accuracy": {
+          "mean": 0.897875,
+          "std": 0.0003061862178478907
+        },
+        "precision": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "recall": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "f1": {
+          "mean": 0.0,
+          "std": 0.0
+        },
+        "roc_auc": {
+          "mean": 0.6764698726918835,
+          "std": 0.010070232613225077
+        }
+      }
+    }
+  ],
+  "best_model": "Gradient Boosting",
+  "feature_importance": [
+    {
+      "feature": "csat_score",
+      "importance": 0.09255657998165866,
+      "std": 0.006880660428835649
+    },
+    {
+      "feature": "tenure_months",
+      "importance": 0.0790836936110748,
+      "std": 0.00826158955916694
+    },
+    {
+      "feature": "monthly_logins",
+      "importance": 0.05689590702650785,
+      "std": 0.004372227676503155
+    },
+    {
+      "feature": "payment_failures",
+      "importance": 0.041740359841041186,
+      "std": 0.0070695418776298685
+    },
+    {
+      "feature": "last_login_days_ago",
+      "importance": 0.012669767238744106,
+      "std": 0.002066428032470139
+    },
+    {
+      "feature": "total_revenue",
+      "importance": 0.001911928468492169,
+      "std": 0.0022203765683311634
+    },
+    {
+      "feature": "customer_segment",
+      "importance": 0.0013083950172497333,
+      "std": 0.001392091177830683
+    },
+    {
+      "feature": "country",
+      "importance": 0.0011575969474649783,
+      "std": 0.0013856510417270514
+    },
+    {
+      "feature": "usage_growth_rate",
+      "importance": 0.0011391736538714642,
+      "std": 0.0015363760947024066
+    },
+    {
+      "feature": "avg_session_time",
+      "importance": 0.0008701594501944326,
+      "std": 0.002355674956408734
+    },
+    {
+      "feature": "features_used",
+      "importance": 0.0007355670553299554,
+      "std": 0.0009340980675172322
+    },
+    {
+      "feature": "signup_channel",
+      "importance": 0.0005987570417922833,
+      "std": 0.0004225048387375175
+    },
+    {
+      "feature": "email_open_rate",
+      "importance": 0.0005554281846368997,
+      "std": 0.001185580472451979
+    },
+    {
+      "feature": "support_tickets",
+      "importance": 0.0004332885715534057,
+      "std": 0.0004192720601987271
+    },
+    {
+      "feature": "survey_response",
+      "importance": 0.0003203606052667035,
+      "std": 0.0007867034412736248
+    }
+  ]
+}

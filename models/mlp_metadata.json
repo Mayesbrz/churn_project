@@ -1,0 +1,73 @@
+{
+  "model_type": "MLP (Deep Learning)",
+  "framework": "TensorFlow/Keras",
+  "creation_date": "2026-05-04T11:46:56.877758",
+  "performance_metrics": {
+    "model": "MLP (Deep Learning)",
+    "accuracy": 0.653,
+    "precision": 0.0885,
+    "recall": 0.2582,
+    "f1_score": 0.1318,
+    "roc_auc": 0.4764,
+    "specificity": 0.6978,
+    "true_negatives": 1880,
+    "false_positives": 814,
+    "false_negatives": 227,
+    "true_positives": 79,
+    "architecture": {
+      "input_dim": 31,
+      "hidden_layers": [
+        128,
+        64,
+        32
+      ],
+      "activation": "relu",
+      "output_activation": "sigmoid",
+      "dropout_rates": [
+        0.3,
+        0.3,
+        0.2
+      ]
+    },
+    "training_date": "2026-05-04T11:46:56.864511",
+    "framework": "TensorFlow/Keras"
+  },
+  "features": {
+    "numerical": [
+      "age",
+      "tenure_months",
+      "monthly_logins",
+      "weekly_active_days",
+      "avg_session_time",
+      "features_used",
+      "usage_growth_rate",
+      "last_login_days_ago",
+      "monthly_fee",
+      "total_revenue",
+      "payment_failures",
+      "support_tickets",
+      "avg_resolution_time",
+      "csat_score",
+      "escalations",
+      "email_open_rate",
+      "marketing_click_rate",
+      "nps_score",
+      "referral_count"
+    ],
+    "categorical": [
+      "customer_id",
+      "gender",
+      "country",
+      "city",
+      "customer_segment",
+      "signup_channel",
+      "contract_type",
+      "payment_method",
+      "discount_applied",
+      "price_increase_last_3m",
+      "complaint_type",
+      "survey_response"
+    ],
+    "total_features": 31
+  }
+}

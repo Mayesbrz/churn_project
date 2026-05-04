@@ -35,24 +35,6 @@ def load_model(filename: str, directory: str = "models"):
     return model
 
 
-def save_config(config: Dict[str, Any], filename: str, directory: str = "models"):
-    """Sauvegarder la configuration d'un modèle"""
-    os.makedirs(directory, exist_ok=True)
-    filepath = os.path.join(directory, f"{filename}_config.json")
-    with open(filepath, 'w') as f:
-        json.dump(config, f, indent=4)
-    print(f"✅ Configuration sauvegardée : {filepath}")
-
-
-def load_config(filename: str, directory: str = "models") -> Dict[str, Any]:
-    """Charger la configuration d'un modèle"""
-    filepath = os.path.join(directory, f"{filename}_config.json")
-    with open(filepath, 'r') as f:
-        config = json.load(f)
-    print(f"✅ Configuration chargée : {filepath}")
-    return config
-
-
 def set_random_seed(seed: int = 42):
     """Fixer les graines aléatoires pour la reproductibilité"""
     np.random.seed(seed)

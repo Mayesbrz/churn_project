@@ -57,6 +57,18 @@ st.markdown(
         section[data-testid="stSidebar"] * {
             color: #e5edf8 !important;
         }
+        section[data-testid="stSidebar"] div[data-testid="stMetric"],
+        section[data-testid="stSidebar"] div[data-testid="stMetric"] * {
+            color: #152235 !important;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stMetricLabel"],
+        section[data-testid="stSidebar"] div[data-testid="stMetricLabel"] * {
+            color: #475569 !important;
+        }
+        section[data-testid="stSidebar"] div[data-testid="stMetricValue"],
+        section[data-testid="stSidebar"] div[data-testid="stMetricValue"] * {
+            color: #111827 !important;
+        }
         .block-container {
             padding-top: 1.4rem;
             padding-bottom: 2.5rem;
@@ -255,7 +267,7 @@ st.markdown(
     f"""
     <div class="hero">
         <h1>Retention Cockpit</h1>
-        <p>Suivi du churn, priorisation des clients à risque et simulation en temps réel avec le modèle final : <b>{metadata["model_type"]}</b>.</p>
+        <p>Suivi du churn, priorisation des clients à risque et simulation en temps réel avec le modèle final : <b>{metadata.get("imbalance_strategy", "Stratégie finale")} + {metadata["model_type"]}</b>.</p>
     </div>
     """,
     unsafe_allow_html=True,
@@ -266,6 +278,7 @@ with st.sidebar:
     page = st.radio("", ["Pilotage", "Prédiction", "Modèles", "Explicabilité", "Données"], label_visibility="collapsed")
     st.divider()
     st.markdown("### Modèle")
+    st.metric("Stratégie", metadata.get("imbalance_strategy", "Non précisée"))
     st.metric("Type", metadata["model_type"])
     st.metric("ROC-AUC", pct(metadata["roc_auc"]))
     st.metric("F1", f"{metadata['f1_score']:.3f}")
@@ -421,9 +434,11 @@ elif page == "Modèles":
     st.markdown(
         f"""
         <div class="insight-box">
-            <b>Choix du modèle.</b> Le modèle final est <b>{metadata["model_type"]}</b>,
-            sélectionné sur le ROC-AUC. Le seuil de décision est ajusté sur validation
-            pour éviter un F1 nul dans un contexte de classes déséquilibrées.
+            <b>Choix du modèle final.</b> Le modèle utilisé en production est
+            <b>{metadata.get("imbalance_strategy", "Stratégie finale")} + {metadata["model_type"]}</b>.
+            Gradient Boosting était le meilleur de la première comparaison en ROC-AUC, mais
+            après l'étude du déséquilibre, Random Over-Sampling + Random Forest donne le meilleur
+            compromis F1/recall. C'est donc ce modèle qui est chargé par le dashboard.
         </div>
         """,
         unsafe_allow_html=True,
